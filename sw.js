@@ -2,7 +2,7 @@
    Ao publicar uma versão nova do app, troque VERSAO: o celular baixa os arquivos novos
    na próxima abertura com internet. Os DADOS não ficam aqui (ficam no localStorage) e
    não são afetados pela troca de versão. */
-const VERSAO = 'diario-v1.0.0';
+const VERSAO = 'diario-v1.0.1';
 const ARQUIVOS = ['./', './index.html', './manifest.webmanifest', './icone-192.png', './icone-512.png',
   './icone-maskable-512.png', './apple-touch-icon.png', './favicon.png'];
 

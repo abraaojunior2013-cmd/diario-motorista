@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diário do Motorista</title>
+<meta name="theme-color" content="#0B3157">
+<meta name="description" content="Ganhos, gastos e lucro das viagens por aplicativo.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Diário">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Tokens — paleta do ecossistema (fonte: processo-seletivo/PALETA-E-LETRA.md). Nenhuma regra define cor própria. */
+:root {
+  color-scheme: light;
+  --cor-primaria: #0B3157; --cor-primaria-clara: #174D7A; --cor-primaria-escura: #072540;
+  --cor-acento: #FFC629; --cor-acento-clara: #FFD966;
+  --cor-fundo: #E8F0FC; --cor-branco: #FFFFFF; --cor-realce: #F4F8FD; --cor-neutra: #DAE6F6;
+  --cor-cinza-bloco: #EFF3F9; --cor-borda: #DCE5EF;
+  --cor-texto: #173653; --cor-texto-suave: #647B99; --cor-texto-apagado: #9AA8BC;
+  --cor-ok: #078548;     --cor-ok-fundo: #E6F4EC;     --cor-ok-borda: #A8D8BC;
+  --cor-alerta: #986000; --cor-alerta-fundo: #FFF4D6; --cor-alerta-borda: #F0D58C;
+  --cor-erro: #B3261E;   --cor-erro-fundo: #FDECEA;   --cor-erro-borda: #F3B8B3;
+  --cor-info: #1769E0;   --cor-info-fundo: #E8F1FE;   --cor-info-borda: #B5CFF7;
+  --raio: 13px; --raio-p: 8px;
+  --sombra: 0 1px 2px rgba(11,49,87,.06), 0 4px 14px rgba(11,49,87,.06);
+  --sombra-alta: 0 12px 32px rgba(7,37,64,.22);
+  --grad-topo: linear-gradient(135deg, #0B3157 0%, #174D7A 100%);
+  --fonte: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { font-family: var(--fonte); background: var(--cor-fundo); color: var(--cor-texto); font-size: 15px; line-height: 1.45;
+  padding-bottom: calc(76px + env(safe-area-inset-bottom)); -webkit-tap-highlight-color: transparent; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* topo */
+.topo { background: var(--grad-topo); color: var(--cor-branco); padding: calc(14px + env(safe-area-inset-top)) 18px 16px; }
+.topo-linha { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+.marca { width: 36px; height: 36px; border-radius: 10px; background: var(--cor-acento); color: var(--cor-primaria);
+  display: grid; place-items: center; font-weight: 800; font-size: 15px; flex: none; }
+.topo h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.topo small { display: block; opacity: .75; font-size: 12.5px; font-weight: 500; }
+
+main { max-width: 760px; margin: 0 auto; padding: 16px 14px 24px; }
+.aba { display: none; }
+.aba.ativa { display: block; }
+
+/* aviso de modo */
+.aviso { border: 1px solid; border-radius: var(--raio-p); padding: 10px 12px; font-size: 13.5px; margin-bottom: 14px; display: none; }
+.aviso.mostra { display: block; }
+.aviso.info { background: var(--cor-info-fundo); border-color: var(--cor-info-borda); color: var(--cor-info); }
+.aviso.alerta { background: var(--cor-alerta-fundo); border-color: var(--cor-alerta-borda); color: var(--cor-alerta); }
+.aviso.erro { background: var(--cor-erro-fundo); border-color: var(--cor-erro-borda); color: var(--cor-erro-escura); }
+
+/* seletor de data */
+.data-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.data-nav .btn-icone { flex: none; }
+.data-nav label { flex: 1; position: relative; background: var(--cor-branco); border: 1px solid var(--cor-borda); border-radius: var(--raio);
+  padding: 9px 12px; text-align: center; box-shadow: var(--sombra); cursor: pointer; }
+.data-nav strong { display: block; font-size: 16px; }
+.data-nav span { font-size: 12.5px; color: var(--cor-texto-suave); }
+.data-nav input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+
+/* cartões */
+.cartao { background: var(--cor-branco); border-radius: var(--raio); box-shadow: var(--sombra); padding: 16px; margin-bottom: 14px; }
+.cartao h2 { font-size: 15px; margin: 0 0 12px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cartao h2 .total { font-size: 15px; }
+.sub { color: var(--cor-texto-suave); font-size: 13px; }
+
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.kpis.k4 { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 620px) { .kpis.k4 { grid-template-columns: repeat(4, 1fr); } }
+.kpi { background: var(--cor-branco); border-radius: var(--raio); box-shadow: var(--sombra); padding: 12px; min-width: 0; }
+.kpi .rot { font-size: 12.5px; color: var(--cor-texto-suave); font-weight: 600; }
+.kpi .val { font-size: 21px; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .det { font-size: 12px; color: var(--cor-texto-suave); }
+.kpi.destaque { background: var(--cor-primaria); color: var(--cor-branco); }
+.kpi.destaque .rot, .kpi.destaque .det { color: var(--cor-neutra); }
+@media (min-width: 620px) { .kpi .val { font-size: 26px; } }
+.pos { color: var(--cor-ok); } .neg { color: var(--cor-erro); }
+.kpi.destaque .pos { color: var(--cor-ok-borda); } .kpi.destaque .neg { color: var(--cor-erro-borda); }
+
+/* meta */
+.meta { margin-top: -4px; margin-bottom: 14px; }
+.barra { height: 8px; background: var(--cor-cinza-bloco); border-radius: 99px; overflow: hidden; }
+.barra > i { display: block; height: 100%; background: var(--cor-ok); border-radius: 99px; transition: width .3s; }
+.meta .sub { display: flex; justify-content: space-between; margin-top: 5px; }
+
+/* formulário de lançamento */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip { border: 1px solid var(--cor-borda); background: var(--cor-realce); border-radius: 99px; padding: 6px 12px; font-size: 13.5px;
+  font-weight: 600; cursor: pointer; color: var(--cor-texto-suave); }
+.chip[aria-pressed="true"] { background: var(--cor-primaria); border-color: var(--cor-primaria); color: var(--cor-branco); }
+.linha-form { display: flex; gap: 8px; align-items: stretch; }
+.campo { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.campo > span { font-size: 12.5px; font-weight: 600; color: var(--cor-texto-suave); }
+input[type=text], input[type=date], input[type=number], textarea, select {
+  width: 100%; border: 1px solid var(--cor-borda); border-radius: var(--raio-p); background: var(--cor-branco);
+  padding: 10px 11px; font-size: 16px; outline: none; min-width: 0; }
+input:focus, textarea:focus, select:focus { border-color: var(--cor-primaria-clara); box-shadow: 0 0 0 3px var(--cor-info-fundo); }
+input.invalido { border-color: var(--cor-erro); box-shadow: 0 0 0 3px var(--cor-erro-fundo); }
+textarea { resize: vertical; min-height: 64px; }
+.prefixo { position: relative; }
+.prefixo::before { content: "R$"; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--cor-texto-suave); font-size: 14px; pointer-events: none; }
+.prefixo input { padding-left: 36px; }
+
+.btn { border: 0; border-radius: var(--raio-p); padding: 10px 16px; font-weight: 700; cursor: pointer; font-size: 15px; }
+.btn-acento { background: var(--cor-acento); color: var(--cor-primaria); }
+.btn-acento:active { background: var(--cor-acento-clara); }
+.btn-primario { background: var(--cor-primaria); color: var(--cor-branco); }
+.btn-sec { background: var(--cor-cinza-bloco); color: var(--cor-texto); border: 1px solid var(--cor-borda); }
+.btn-icone { width: 42px; height: 42px; border-radius: var(--raio); border: 1px solid var(--cor-borda); background: var(--cor-branco);
+  box-shadow: var(--sombra); cursor: pointer; font-size: 18px; color: var(--cor-primaria); display: grid; place-items: center; }
+.add { align-self: flex-end; height: 44px; padding: 0 16px; }
+
+/* listas de lançamentos */
+.lista { list-style: none; margin: 12px 0 0; padding: 0; }
+.lista li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--cor-borda); }
+.lista li:first-child { border-top: 0; }
+.lista .tag { font-size: 12px; font-weight: 600; background: var(--cor-neutra); color: var(--cor-primaria); padding: 3px 9px; border-radius: 99px; flex: none; }
+.lista .desc { flex: 1; min-width: 0; font-size: 13.5px; color: var(--cor-texto-suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lista .v { font-weight: 700; }
+.lista .x { border: 0; background: none; color: var(--cor-texto-apagado); font-size: 20px; cursor: pointer; width: 32px; height: 32px; border-radius: 8px; flex: none; }
+.lista .x:hover { background: var(--cor-erro-fundo); color: var(--cor-erro); }
+.vazio { color: var(--cor-texto-apagado); font-size: 13.5px; padding: 8px 0 0; }
+
+.grade2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* relatórios */
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--cor-branco); border-radius: var(--raio); padding: 4px; box-shadow: var(--sombra); margin-bottom: 12px; }
+.seg button { border: 0; background: none; padding: 9px 4px; border-radius: 9px; font-weight: 600; font-size: 14px; color: var(--cor-texto-suave); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--cor-primaria); color: var(--cor-branco); }
+.periodo-campos { display: none; gap: 8px; margin-bottom: 12px; align-items: flex-end; }
+.periodo-campos.mostra { display: flex; }
+.cab-rel { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin: 4px 2px 12px; }
+.cab-rel h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+.comparativo { font-size: 13px; font-weight: 600; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tabela { border-radius: var(--raio); overflow: hidden; box-shadow: var(--sombra); background: var(--cor-branco); margin-bottom: 14px; }
+.tabela-rolagem { overflow-x: auto; }
+th { background: var(--cor-primaria); color: var(--cor-branco); font-weight: 700; font-size: 13px; text-align: left; padding: 10px 12px; white-space: nowrap; }
+td { padding: 9px 12px; border-top: 1px solid var(--cor-borda); white-space: nowrap; }
+th.d, td.d { text-align: right; }
+tbody tr:nth-child(even) td { background: var(--cor-realce); }
+tfoot td { font-weight: 700; background: var(--cor-cinza-bloco); }
+tr.folga td { color: var(--cor-texto-apagado); }
+.barra-mini { display: inline-block; height: 6px; border-radius: 99px; background: var(--cor-primaria-clara); vertical-align: middle; margin-right: 6px; }
+
+.grafico svg { display: block; width: 100%; height: auto; }
+.legenda { display: flex; gap: 14px; font-size: 12.5px; color: var(--cor-texto-suave); margin-top: 8px; }
+.legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+.destaques { list-style: none; padding: 0; margin: 0; }
+.destaques li { padding: 8px 0; border-top: 1px solid var(--cor-borda); display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.destaques li:first-child { border-top: 0; }
+.destaques li span:first-child { color: var(--cor-texto-suave); }
+.destaques li span:last-child { font-weight: 600; text-align: right; }
+
+.acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.texto-copia { width: 100%; min-height: 160px; margin-top: 10px; font-size: 13px; display: none; }
+.texto-copia.mostra { display: block; }
+
+/* navegação inferior */
+nav.inferior { position: fixed; left: 0; right: 0; bottom: 0; background: var(--cor-branco); border-top: 1px solid var(--cor-borda);
+  display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 14px rgba(11,49,87,.06); z-index: 5; }
+nav.inferior .itens { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; max-width: 760px; }
+nav.inferior button { border: 0; background: none; padding: 9px 0 10px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 12px; font-weight: 600; color: var(--cor-texto-apagado); cursor: pointer; }
+nav.inferior button svg { width: 22px; height: 22px; }
+nav.inferior button[aria-current="page"] { color: var(--cor-primaria); }
+
+/* aviso flutuante */
+.toast { position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px);
+  background: var(--cor-primaria-escura); color: var(--cor-branco); border-radius: var(--raio); box-shadow: var(--sombra-alta);
+  padding: 10px 10px 10px 16px; display: flex; gap: 12px; align-items: center; font-size: 14px; opacity: 0; pointer-events: none;
+  transition: .2s; z-index: 10; max-width: calc(100% - 28px); }
+.toast.mostra { opacity: 1; transform: translateX(-50%); pointer-events: auto; }
+.toast button { background: none; border: 0; color: var(--cor-acento); font-weight: 700; cursor: pointer; padding: 4px 8px; }
+.toast button:empty { display: none; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-linha">
+    <div class="marca" aria-hidden="true">R$</div>
+    <div>
+      <h1>Diário do Motorista</h1>
+      <small id="topoSub">Ganhos, gastos e lucro das viagens</small>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="aviso" class="aviso" role="status"></div>
+
+  <!-- ===================== ABA HOJE ===================== -->
+  <section id="aba-hoje" class="aba ativa" aria-label="Lançamentos do dia">
+    <div class="data-nav">
+      <button class="btn-icone" id="diaAnt" aria-label="Dia anterior">‹</button>
+      <label>
+        <strong id="dataTitulo">—</strong>
+        <span id="dataSub">toque para escolher a data</span>
+        <input type="date" id="dataSel" aria-label="Data do lançamento">
+      </label>
+      <button class="btn-icone" id="diaProx" aria-label="Próximo dia">›</button>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="rot">Ganhos</div><div class="val num" id="hGanho">R$ 0,00</div></div>
+      <div class="kpi"><div class="rot">Gastos</div><div class="val num" id="hGasto">R$ 0,00</div></div>
+      <div class="kpi destaque"><div class="rot">Lucro do dia</div><div class="val num" id="hLucro">R$ 0,00</div></div>
+    </div>
+    <div class="meta" id="metaBox" hidden>
+      <div class="barra"><i id="metaBarra" style="width:0"></i></div>
+      <div class="sub"><span id="metaTxt"></span><span id="metaFalta"></span></div>
+    </div>
+
+    <div class="cartao">
+      <h2>Ganhos <span class="total num" id="totGanhos"></span></h2>
+      <div class="chips" id="chipsPlat" role="group" aria-label="Plataforma"></div>
+      <form class="linha-form" id="formGanho" novalidate>
+        <label class="campo" style="flex:1.4"><span>Valor recebido</span>
+          <div class="prefixo"><input type="text" inputmode="decimal" id="gValor" placeholder="0,00" autocomplete="off"></div></label>
+        <label class="campo" style="flex:.8"><span>Corridas</span>
+          <input type="number" inputmode="numeric" min="0" step="1" id="gCorridas" placeholder="0"></label>
+        <button class="btn btn-acento add" type="submit">+ Somar</button>
+      </form>
+      <ul class="lista" id="listaGanhos"></ul>
+    </div>
+
+    <div class="cartao">
+      <h2>Gastos <span class="total num" id="totGastos"></span></h2>
+      <div class="chips" id="chipsCat" role="group" aria-label="Categoria do gasto"></div>
+      <form class="linha-form" id="formGasto" novalidate>
+        <label class="campo" style="flex:1"><span>Valor</span>
+          <div class="prefixo"><input type="text" inputmode="decimal" id="dValor" placeholder="0,00" autocomplete="off"></div></label>
+        <label class="campo" style="flex:1.2"><span>Descrição (opcional)</span>
+          <input type="text" id="dDesc" placeholder="ex.: posto, almoço" autocomplete="off"></label>
+        <button class="btn btn-acento add" type="submit">+</button>
+      </form>
+      <ul class="lista" id="listaGastos"></ul>
+    </div>
+
+    <div class="cartao">
+      <h2>Jornada <span class="sub">opcional — melhora os relatórios</span></h2>
+      <div class="grade2">
+        <label class="campo"><span>Km rodados</span><input type="text" inputmode="decimal" id="jKm" placeholder="0"></label>
+        <label class="campo"><span>Horas trabalhadas</span><input type="text" inputmode="decimal" id="jHoras" placeholder="ex.: 8:30"></label>
+      </div>
+      <label class="campo" style="margin-top:10px"><span>Observações</span>
+        <textarea id="jObs" placeholder="Chuva, evento na cidade, bandeira dinâmica…"></textarea></label>
+    </div>
+  </section>
+
+  <!-- ===================== ABA RELATÓRIOS ===================== -->
+  <section id="aba-rel" class="aba" aria-label="Relatórios">
+    <div class="seg" role="group" aria-label="Período do relatório">
+      <button data-tipo="dia">Dia</button>
+      <button data-tipo="7">7 dias</button>
+      <button data-tipo="30">30 dias</button>
+      <button data-tipo="per">Período</button>
+    </div>
+    <div class="periodo-campos" id="campoDia">
+      <label class="campo"><span>Dia</span><input type="date" id="relDia"></label>
+    </div>
+    <div class="periodo-campos" id="campoPer">
+      <label class="campo"><span>Data inicial</span><input type="date" id="relIni"></label>
+      <label class="campo"><span>Data final</span><input type="date" id="relFim"></label>
+    </div>
+    <div id="relConteudo"></div>
+  </section>
+
+  <!-- ===================== ABA AJUSTES ===================== -->
+  <section id="aba-aj" class="aba" aria-label="Ajustes">
+    <div class="cartao">
+      <h2>Meta diária</h2>
+      <label class="campo"><span>Lucro que quero fazer por dia trabalhado</span>
+        <div class="prefixo"><input type="text" inputmode="decimal" id="cfgMeta" placeholder="0,00"></div></label>
+      <p class="sub">Aparece como barra de progresso no dia. Deixe 0 para esconder.</p>
+    </div>
+    <div class="cartao">
+      <h2>Custo do carro por km</h2>
+      <label class="campo"><span>Desgaste estimado (pneu, óleo, revisão, depreciação) por km</span>
+        <div class="prefixo"><input type="text" inputmode="decimal" id="cfgKm" placeholder="0,00"></div></label>
+      <p class="sub">O lucro do dia só desconta o que você <b>pagou</b> naquele dia. Mas cada km rodado gasta o carro, e essa conta chega depois.
+        Com um valor aqui (motoristas costumam usar algo entre R$ 0,15 e R$ 0,40/km), os relatórios mostram também o <b>lucro real estimado</b>.</p>
+    </div>
+    <div class="cartao">
+      <h2>Backup</h2>
+      <p class="sub" style="margin-top:0">Seus lançamentos ficam guardados <b>só neste celular</b>. Se trocar de aparelho, desinstalar o app ou limpar os dados do navegador, eles se perdem —
+        a não ser que você tenha um backup. Salve um por semana e mande para você mesmo no WhatsApp ou guarde no Google Drive.</p>
+      <p class="sub" id="cfgModo"></p>
+      <div class="acoes">
+        <button class="btn btn-primario" id="btnBackup">Salvar backup</button>
+        <label class="btn btn-sec" style="display:inline-block">Restaurar backup<input type="file" id="arqRestaurar" accept=".json,application/json" hidden></label>
+      </div>
+    </div>
+    <div class="cartao">
+      <h2>Exportar para planilha</h2>
+      <div class="acoes">
+        <button class="btn btn-sec" id="btnCsv">Copiar tudo em CSV</button>
+      </div>
+      <textarea class="texto-copia" id="csvTexto" readonly></textarea>
+    </div>
+    <div class="cartao" id="cardInstalar" hidden>
+      <h2>Instalar no celular</h2>
+      <p class="sub" id="txtInstalar" style="margin-top:0"></p>
+      <div class="acoes"><button class="btn btn-acento" id="btnInstalar" hidden>Instalar app</button></div>
+    </div>
+    <p class="sub" style="text-align:center">Diário do Motorista · v1.0</p>
+  </section>
+</main>
+
+<nav class="inferior" aria-label="Navegação">
+  <div class="itens">
+    <button data-aba="hoje" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Lançar</button>
+    <button data-aba="rel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Relatórios</button>
+    <button data-aba="aj">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
+  </div>
+</nav>
+
+<div class="toast" id="toast" role="status"><span id="toastTxt"></span><button id="toastBtn"></button></div>
+
+<script>
+(function () {
+'use strict';
+
+/* ============================================================
+   CONFIGURAÇÃO (o que muda sem mexer no resto)
+   ============================================================ */
+const PLATAFORMAS = ['Uber', '99', 'inDrive', 'Particular', 'Gorjeta', 'Outros'];
+const CATEGORIAS  = ['Combustível', 'Alimentação', 'Manutenção', 'Lavagem', 'Aluguel do carro', 'Estacionamento/pedágio', 'Celular/internet', 'Outros'];
+const SEMANA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+const SEMANA_CURTA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const CHAVE_LOCAL = 'diarioMotorista.v1';
+const RE_DIA = /^\d{4}-\d{2}-\d{2}$/;
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+const S = {
+  dias: {},                       // 'AAAA-MM-DD' -> { data, ganhos[], gastos[], km, horas, obs }
+  config: { metaDia: 0, custoKm: 0 },
+  modo: 'local',
+  dataSel: hojeStr(),
+  plat: PLATAFORMAS[0],
+  cat: CATEGORIAS[0],
+  rel: { tipo: '7', dia: hojeStr(), ini: addDias(hojeStr(), -29), fim: hojeStr() },
+  aba: 'hoje',
+};
+
+/* ============================================================
+   UTILITÁRIOS — datas, números, formatação
+   ============================================================ */
+function pad(n) { return String(n).padStart(2, '0'); }
+function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function hojeStr() { return ymd(new Date()); }
+function paraData(s) { const [a, m, d] = s.split('-').map(Number); return new Date(a, m - 1, d); }
+function addDias(s, n) { const d = paraData(s); d.setDate(d.getDate() + n); return ymd(d); }
+function intervalo(ini, fim) { const out = []; let s = ini; let guarda = 0; while (s <= fim && guarda++ < 3700) { out.push(s); s = addDias(s, 1); } return out; }
+function dataBr(s, comAno = true) { const [a, m, d] = s.split('-'); return d + '/' + m + (comAno ? '/' + a : ''); }
+function diaSemana(s) { return SEMANA[paraData(s).getDay()]; }
+
+const fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmtNum = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+function brl(v) { return fmtBRL.format(Math.round((v || 0) * 100) / 100); }
+function num(v) { return fmtNum.format(v || 0); }
+function pct(v) { return isFinite(v) ? fmtNum.format(v * 100) + '%' : '—'; }
+function horasTxt(h) { if (!h) return '0h'; const t = Math.round(h * 60); return Math.floor(t / 60) + 'h' + (t % 60 ? pad(t % 60) : ''); }
+
+/* "45,50" | "45.50" | "1.234,56" -> 45.5 ; vazio/ inválido -> NaN */
+function lerValor(txt) {
+  let s = String(txt || '').trim().replace(/[R$\s]/g, '');
+  if (!s) return NaN;
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  const v = Number(s);
+  return isFinite(v) ? v : NaN;
+}
+/* "8:30" | "8h30" | "8,5" -> 8.5 */
+function lerHoras(txt) {
+  const s = String(txt || '').trim().toLowerCase();
+  if (!s) return 0;
+  const m = s.match(/^(\d{1,2})\s*[:h]\s*(\d{0,2})$/);
+  if (m) return Number(m[1]) + (Number(m[2] || 0) / 60);
+  const v = lerValor(s); return isFinite(v) && v > 0 ? v : 0;
+}
+function novoId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+/* ============================================================
+   REGRAS DE NEGÓCIO — cálculo de um dia e de um período
+   ============================================================ */
+function novoDia(data) { return { data, ganhos: [], gastos: [], km: 0, horas: 0, obs: '' }; }
+function diaVazio(d) { return !d.ganhos.length && !d.gastos.length && !d.km && !d.horas && !d.obs; }
+
+function calcDia(s) {
+  const d = S.dias[s];
+  if (!d) return { data: s, ganho: 0, gasto: 0, lucro: 0, corridas: 0, km: 0, horas: 0, trabalhou: false };
+  const ganho = d.ganhos.reduce((a, g) => a + (g.valor || 0), 0);
+  const gasto = d.gastos.reduce((a, g) => a + (g.valor || 0), 0);
+  const corridas = d.ganhos.reduce((a, g) => a + (g.corridas || 0), 0);
+  return { data: s, ganho, gasto, lucro: ganho - gasto, corridas, km: d.km || 0, horas: d.horas || 0, trabalhou: ganho > 0 };
+}
+
+function calcPeriodo(ini, fim) {
+  const dias = intervalo(ini, fim).map(calcDia);
+  const t = { ini, fim, dias, ganho: 0, gasto: 0, lucro: 0, corridas: 0, km: 0, horas: 0, diasTrab: 0, lucroH: 0, lucroKm: 0, porPlat: {}, porCat: {} };
+  for (const c of dias) {
+    t.ganho += c.ganho; t.gasto += c.gasto; t.lucro += c.lucro;
+    t.corridas += c.corridas; t.km += c.km; t.horas += c.horas;
+    if (c.horas) t.lucroH += c.lucro;   // lucro/hora só com dias que têm horas informadas
+    if (c.km) t.lucroKm += c.lucro;     // idem para km
+    if (c.trabalhou) t.diasTrab++;
+    const d = S.dias[c.data];
+    if (d) {
+      for (const g of d.ganhos) { const p = t.porPlat[g.plat] ||= { valor: 0, corridas: 0 }; p.valor += g.valor; p.corridas += g.corridas || 0; }
+      for (const g of d.gastos) { t.porCat[g.cat] = (t.porCat[g.cat] || 0) + g.valor; }
+    }
+  }
+  t.desgaste = t.km * (S.config.custoKm || 0);
+  t.lucroReal = t.lucro - t.desgaste;
+  t.margem = t.ganho ? t.lucro / t.ganho : NaN;
+  return t;
+}
+
+/* ============================================================
+   PERSISTÊNCIA — dados guardados no próprio aparelho (localStorage) + backup em arquivo
+   ============================================================ */
+function gravar() { salvarLocal(); }   // tudo fica no aparelho (localStorage)
+function salvarDia(s) {
+  const d = S.dias[s];
+  if (!d || diaVazio(d)) { delete S.dias[s]; gravar(s, null); }
+  else gravar(s, d);
+}
+function salvarConfig() { gravar(); }
+
+function salvarLocal() {
+  try { localStorage.setItem(CHAVE_LOCAL, JSON.stringify({ dias: S.dias, config: S.config })); }
+  catch (e) { mostrarAviso('erro', 'Este navegador não permitiu salvar os dados.'); }
+}
+function carregarLocal() {
+  try { const o = JSON.parse(localStorage.getItem(CHAVE_LOCAL) || 'null'); if (o) { S.dias = o.dias || {}; S.config = { ...S.config, ...(o.config || {}) }; } }
+  catch (e) { /* sem armazenamento: segue em memória */ }
+}
+
+const CHAVE_BACKUP = 'diarioMotorista.ultimoBackup';
+function iniciarDados() {
+  S.modo = 'local';
+  carregarLocal();
+  // pede ao navegador para não apagar os dados quando faltar espaço
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+  lembrarBackup();
+  renderTudo();
+}
+
+function ultimoBackup() { try { return localStorage.getItem(CHAVE_BACKUP) || ''; } catch (e) { return ''; } }
+function lembrarBackup() {
+  const n = Object.keys(S.dias).length;
+  if (n < 3) return;                                   // pouca coisa ainda: não incomoda
+  const ult = ultimoBackup();
+  const dias = ult ? Math.floor((paraData(hojeStr()) - paraData(ult)) / 864e5) : Infinity;
+  if (dias >= 7) mostrarAviso('alerta', (ult ? 'Seu último backup foi há ' + dias + ' dias.' : 'Você ainda não fez nenhum backup.') + ' Vá em Ajustes → Salvar backup.');
+}
+
+async function salvarBackup() {
+  const corpo = JSON.stringify({ app: 'diario-motorista', versao: 1, geradoEm: new Date().toISOString(), dias: S.dias, config: S.config }, null, 1);
+  const nome = 'backup-diario-' + hojeStr() + '.json';
+  const blob = new Blob([corpo], { type: 'application/json' });
+  let ok = false;
+  try {
+    const arq = new File([blob], nome, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [arq] })) {
+      await navigator.share({ files: [arq], title: 'Backup — Diário do Motorista' });
+      ok = true;
+    }
+  } catch (e) { if (e && e.name === 'AbortError') return; }   // pessoa cancelou o compartilhamento
+  if (!ok) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+  try { localStorage.setItem(CHAVE_BACKUP, hojeStr()); } catch (e) {}
+  esconderAviso(); renderAj(); toast('Backup salvo: ' + nome);
+}
+
+let restauracaoPendente = null;
+function lerBackup(arquivo) {
+  const r = new FileReader();
+  r.onload = () => {
+    let o = null;
+    try { o = JSON.parse(r.result); } catch (e) {}
+    if (!o || o.app !== 'diario-motorista' || typeof o.dias !== 'object') { mostrarAviso('erro', 'Esse arquivo não é um backup do Diário do Motorista.'); return; }
+    const dias = {};
+    for (const [k, d] of Object.entries(o.dias)) {
+      if (!RE_DIA.test(k) || !d) continue;
+      dias[k] = { ...novoDia(k), ...d, ganhos: Array.isArray(d.ganhos) ? d.ganhos : [], gastos: Array.isArray(d.gastos) ? d.gastos : [] };
+    }
+    restauracaoPendente = { dias, config: { metaDia: 0, custoKm: 0, ...(o.config || {}) } };
+    const n = Object.keys(dias).length, atual = Object.keys(S.dias).length;
+    toast('Backup com ' + n + ' dias' + (o.geradoEm ? ' (de ' + dataBr(o.geradoEm.slice(0, 10)) + ')' : '') + '. Substituir os ' + atual + ' dias atuais?', 'Substituir', () => {
+      S.dias = restauracaoPendente.dias; S.config = restauracaoPendente.config; restauracaoPendente = null;
+      salvarLocal(); esconderAviso(); renderTudo(); toast('Backup restaurado.');
+    }, 12000);
+  };
+  r.readAsText(arquivo);
+}
+
+/* ============================================================
+   INTERFACE — avisos
+   ============================================================ */
+function mostrarAviso(tipo, txt) { const a = $('aviso'); a.className = 'aviso mostra ' + tipo; a.textContent = txt; }
+function esconderAviso() { const a = $('aviso'); a.className = 'aviso'; a.textContent = ''; }
+
+let toastTimer = null;
+function toast(txt, rotuloBtn, acao, ms) {
+  const t = $('toast'); $('toastTxt').textContent = txt;
+  const b = $('toastBtn'); b.textContent = rotuloBtn || ''; b.onclick = () => { t.classList.remove('mostra'); acao && acao(); };
+  t.classList.add('mostra'); clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('mostra'), ms || 5000);
+}
+
+/* ============================================================
+   INTERFACE — aba Lançar
+   ============================================================ */
+function diaEditavel(s) {
+  if (!S.dias[s]) S.dias[s] = novoDia(s);
+  return S.dias[s];
+}
+
+function montarChips(alvo, itens, chave) {
+  const box = $(alvo); box.innerHTML = '';
+  for (const it of itens) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = it;
+    b.setAttribute('aria-pressed', String(S[chave] === it));
+    b.onclick = () => { S[chave] = it; box.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', String(x.textContent === it))); };
+    box.appendChild(b);
+  }
+}
+
+function renderHoje() {
+  const s = S.dataSel, hoje = hojeStr();
+  $('dataSel').value = s;
+  const rel = s === hoje ? 'Hoje' : s === addDias(hoje, -1) ? 'Ontem' : s === addDias(hoje, 1) ? 'Amanhã' : '';
+  $('dataTitulo').textContent = (rel ? rel + ', ' : '') + dataBr(s);
+  $('dataSub').textContent = diaSemana(s) + ' · toque para trocar a data';
+
+  const c = calcDia(s);
+  $('hGanho').textContent = brl(c.ganho);
+  $('hGasto').textContent = brl(c.gasto);
+  const l = $('hLucro'); l.textContent = brl(c.lucro); l.className = 'val num ' + (c.lucro < 0 ? 'neg' : '');
+  $('totGanhos').textContent = c.ganho ? brl(c.ganho) : '';
+  $('totGastos').textContent = c.gasto ? brl(c.gasto) : '';
+
+  const meta = S.config.metaDia || 0;
+  $('metaBox').hidden = !(meta > 0);
+  if (meta > 0) {
+    const p = Math.max(0, Math.min(1, c.lucro / meta));
+    $('metaBarra').style.width = (p * 100) + '%';
+    $('metaTxt').textContent = 'Meta do dia: ' + brl(meta) + ' (' + Math.round(p * 100) + '%)';
+    $('metaFalta').textContent = c.lucro >= meta ? 'Meta batida ✓' : 'faltam ' + brl(meta - c.lucro);
+  }
+
+  const d = S.dias[s] || novoDia(s);
+  const lg = $('listaGanhos');
+  lg.innerHTML = d.ganhos.length ? '' : '<li class="vazio">Nenhum ganho lançado neste dia.</li>';
+  d.ganhos.forEach(g => lg.appendChild(itemLista(g.plat, g.corridas ? g.corridas + (g.corridas === 1 ? ' corrida' : ' corridas') : '', g.valor, () => remover('ganhos', g))));
+  const lgs = $('listaGastos');
+  lgs.innerHTML = d.gastos.length ? '' : '<li class="vazio">Nenhum gasto lançado neste dia.</li>';
+  d.gastos.forEach(g => lgs.appendChild(itemLista(g.cat, g.desc || '', g.valor, () => remover('gastos', g))));
+
+  // campos da jornada: não sobrescreve o que está sendo digitado
+  const foco = document.activeElement;
+  if (foco !== $('jKm')) $('jKm').value = d.km ? num(d.km) : '';
+  if (foco !== $('jHoras')) $('jHoras').value = d.horas ? horasTxt(d.horas).replace('h', ':').replace(/:$/, ':00') : '';
+  if (foco !== $('jObs')) $('jObs').value = d.obs || '';
+}
+
+function itemLista(tag, desc, valor, aoRemover) {
+  const li = document.createElement('li');
+  li.innerHTML = '<span class="tag"></span><span class="desc"></span><span class="v num"></span><button class="x" aria-label="Remover">×</button>';
+  li.querySelector('.tag').textContent = tag;
+  li.querySelector('.desc').textContent = desc;
+  li.querySelector('.v').textContent = brl(valor);
+  li.querySelector('.x').onclick = aoRemover;
+  return li;
+}
+
+function remover(lista, item) {
+  const s = S.dataSel, d = diaEditavel(s);
+  const i = d[lista].findIndex(x => x.id === item.id);
+  if (i < 0) return;
+  d[lista].splice(i, 1);
+  salvarDia(s); renderHoje();
+  toast((lista === 'ganhos' ? 'Ganho' : 'Gasto') + ' de ' + brl(item.valor) + ' removido.', 'Desfazer', () => {
+    const d2 = diaEditavel(s); d2[lista].splice(Math.min(i, d2[lista].length), 0, item); salvarDia(s); renderHoje();
+  });
+}
+
+function ligarHoje() {
+  montarChips('chipsPlat', PLATAFORMAS, 'plat');
+  montarChips('chipsCat', CATEGORIAS, 'cat');
+
+  $('dataSel').addEventListener('change', e => { if (RE_DIA.test(e.target.value)) { S.dataSel = e.target.value; renderHoje(); } });
+  $('diaAnt').onclick = () => { S.dataSel = addDias(S.dataSel, -1); renderHoje(); };
+  $('diaProx').onclick = () => { S.dataSel = addDias(S.dataSel, 1); renderHoje(); };
+
+  $('formGanho').addEventListener('submit', e => {
+    e.preventDefault();
+    const inp = $('gValor'), v = lerValor(inp.value);
+    if (!(v > 0)) { inp.classList.add('invalido'); inp.focus(); return; }
+    inp.classList.remove('invalido');
+    const corridas = Math.max(0, parseInt($('gCorridas').value, 10) || 0);
+    diaEditavel(S.dataSel).ganhos.push({ id: novoId(), plat: S.plat, valor: Math.round(v * 100) / 100, corridas });
+    salvarDia(S.dataSel);
+    inp.value = ''; $('gCorridas').value = ''; inp.focus();
+    renderHoje(); toast(S.plat + ': ' + brl(v) + ' lançado.');
+  });
+
+  $('formGasto').addEventListener('submit', e => {
+    e.preventDefault();
+    const inp = $('dValor'), v = lerValor(inp.value);
+    if (!(v > 0)) { inp.classList.add('invalido'); inp.focus(); return; }
+    inp.classList.remove('invalido');
+    diaEditavel(S.dataSel).gastos.push({ id: novoId(), cat: S.cat, desc: $('dDesc').value.trim().slice(0, 80), valor: Math.round(v * 100) / 100 });
+    salvarDia(S.dataSel);
+    inp.value = ''; $('dDesc').value = ''; inp.focus();
+    renderHoje(); toast(S.cat + ': ' + brl(v) + ' lançado.');
+  });
+  ['gValor', 'dValor'].forEach(id => $(id).addEventListener('input', e => e.target.classList.remove('invalido')));
+
+  // jornada: grava ao sair do campo, só se mudou
+  $('jKm').addEventListener('change', e => {
+    const v = lerValor(e.target.value); const d = diaEditavel(S.dataSel); const novo = v > 0 ? v : 0;
+    if (novo !== d.km) { d.km = novo; salvarDia(S.dataSel); } renderHoje();
+  });
+  $('jHoras').addEventListener('change', e => {
+    const v = lerHoras(e.target.value); const d = diaEditavel(S.dataSel);
+    if (v !== d.horas) { d.horas = v; salvarDia(S.dataSel); } renderHoje();
+  });
+  $('jObs').addEventListener('change', e => {
+    const v = e.target.value.trim().slice(0, 500); const d = diaEditavel(S.dataSel);
+    if (v !== d.obs) { d.obs = v; salvarDia(S.dataSel); }
+  });
+}
+
+/* ============================================================
+   INTERFACE — aba Relatórios
+   ============================================================ */
+function periodoAtual() {
+  const r = S.rel, hoje = hojeStr();
+  if (r.tipo === 'dia') return { ini: r.dia, fim: r.dia, titulo: 'Relatório do dia', faixa: diaSemana(r.dia) + ', ' + dataBr(r.dia) };
+  if (r.tipo === '7')  return { ini: addDias(hoje, -6), fim: hoje, titulo: 'Últimos 7 dias', faixa: dataBr(addDias(hoje, -6), false) + ' a ' + dataBr(hoje) };
+  if (r.tipo === '30') return { ini: addDias(hoje, -29), fim: hoje, titulo: 'Últimos 30 dias', faixa: dataBr(addDias(hoje, -29), false) + ' a ' + dataBr(hoje) };
+  let ini = r.ini, fim = r.fim; if (ini > fim) [ini, fim] = [fim, ini];
+  return { ini, fim, titulo: 'Período escolhido', faixa: dataBr(ini) + ' a ' + dataBr(fim) };
+}
+
+function renderRel() {
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tipo === S.rel.tipo)));
+  $('campoDia').classList.toggle('mostra', S.rel.tipo === 'dia');
+  $('campoPer').classList.toggle('mostra', S.rel.tipo === 'per');
+  $('relDia').value = S.rel.dia; $('relIni').value = S.rel.ini; $('relFim').value = S.rel.fim;
+
+  const p = periodoAtual();
+  const t = calcPeriodo(p.ini, p.fim);
+  const ehDia = p.ini === p.fim;
+  const nDias = t.dias.length;
+
+  // comparativo com o período anterior de mesmo tamanho
+  let comp = '';
+  if (!ehDia) {
+    const ant = calcPeriodo(addDias(p.ini, -nDias), addDias(p.ini, -1));
+    if (ant.lucro !== 0) {
+      const v = (t.lucro - ant.lucro) / Math.abs(ant.lucro);
+      comp = '<span class="comparativo ' + (v >= 0 ? 'pos' : 'neg') + '">' + (v >= 0 ? '▲ ' : '▼ ') + pct(Math.abs(v)) + ' no lucro</span><br><span class="sub">vs. ' + nDias + ' dias anteriores (' + brl(ant.lucro) + ')</span>';
+    }
+  }
+
+  let h = '';
+  h += '<div class="cab-rel"><div><div class="sub">' + esc(p.faixa) + '</div><h2>' + esc(p.titulo) + '</h2></div><div style="text-align:right">' + comp + '</div></div>';
+
+  if (!t.ganho && !t.gasto) {
+    h += '<div class="cartao"><p class="vazio" style="padding:0">Nenhum lançamento neste período.</p></div>';
+    $('relConteudo').innerHTML = h; return;
+  }
+
+  h += '<div class="kpis k4">'
+    + kpi('Ganhos brutos', brl(t.ganho), t.corridas ? num(t.corridas) + ' corridas' : '')
+    + kpi('Gastos', brl(t.gasto), t.ganho ? pct(t.gasto / t.ganho) + ' dos ganhos' : '')
+    + kpi('Lucro', '<span class="' + (t.lucro < 0 ? 'neg' : '') + '">' + brl(t.lucro) + '</span>', 'margem ' + pct(t.margem), true)
+    + (ehDia
+        ? kpi('Lucro por hora', t.horas ? brl(t.lucroH / t.horas) : '—', t.horas ? horasTxt(t.horas) + ' trabalhadas' : 'informe as horas')
+        : kpi('Média por dia', t.diasTrab ? brl(t.lucro / t.diasTrab) : '—', t.diasTrab + ' de ' + nDias + ' dias trabalhados'))
+    + '</div>';
+
+  const ind = [];
+  if (!ehDia && t.horas) ind.push(['Lucro por hora', brl(t.lucroH / t.horas) + ' <span class="sub">(' + horasTxt(t.horas) + ')</span>']);
+  if (t.km) ind.push(['Lucro por km', brl(t.lucroKm / t.km) + ' <span class="sub">(' + num(t.km) + ' km)</span>']);
+  if (t.corridas) ind.push(['Ganho médio por corrida', brl(t.ganho / t.corridas)]);
+  if (S.config.custoKm > 0 && t.km) ind.push(['Desgaste do carro estimado', '− ' + brl(t.desgaste) + ' <span class="sub">(' + brl(S.config.custoKm) + '/km)</span>'],
+                                         ['<b>Lucro real estimado</b>', '<b class="' + (t.lucroReal < 0 ? 'neg' : 'pos') + '">' + brl(t.lucroReal) + '</b>']);
+  if (!ehDia) {
+    const trab = t.dias.filter(d => d.trabalhou);
+    if (trab.length > 1) {
+      const melhor = trab.reduce((a, b) => b.lucro > a.lucro ? b : a);
+      const pior = trab.reduce((a, b) => b.lucro < a.lucro ? b : a);
+      ind.push(['Melhor dia', SEMANA_CURTA[paraData(melhor.data).getDay()] + ' ' + dataBr(melhor.data, false) + ' · ' + brl(melhor.lucro)]);
+      ind.push(['Dia mais fraco', SEMANA_CURTA[paraData(pior.data).getDay()] + ' ' + dataBr(pior.data, false) + ' · ' + brl(pior.lucro)]);
+    }
+    if (nDias >= 14 && trab.length >= 5) {
+      const porSem = {};
+      trab.forEach(d => { const w = paraData(d.data).getDay(); (porSem[w] ||= []).push(d.lucro); });
+      const medias = Object.entries(porSem).map(([w, arr]) => [Number(w), arr.reduce((a, b) => a + b, 0) / arr.length, arr.length]);
+      const top = medias.reduce((a, b) => b[1] > a[1] ? b : a);
+      ind.push(['Dia da semana que mais rende', SEMANA[top[0]] + ' · média ' + brl(top[1]) + ' <span class="sub">(' + top[2] + 'x)</span>']);
+    }
+  }
+  if (ind.length) h += '<div class="cartao"><h2>Indicadores</h2><ul class="destaques">' + ind.map(([a, b]) => '<li><span>' + a + '</span><span class="num">' + b + '</span></li>').join('') + '</ul></div>';
+
+  if (!ehDia) h += '<div class="cartao grafico"><h2>Lucro por dia</h2>' + grafico(t.dias) + '</div>';
+
+  // por plataforma
+  const plats = Object.entries(t.porPlat).sort((a, b) => b[1].valor - a[1].valor);
+  if (plats.length) {
+    const max = plats[0][1].valor || 1;
+    h += '<div class="tabela"><table><thead><tr><th>Plataforma</th><th class="d">Corridas</th><th class="d">Ganhos</th><th class="d">%</th></tr></thead><tbody>'
+      + plats.map(([n, v]) => '<tr><td><span class="barra-mini" style="width:' + Math.max(4, v.valor / max * 48) + 'px"></span>' + esc(n) + '</td><td class="d num">' + (v.corridas || '—') + '</td><td class="d num">' + brl(v.valor) + '</td><td class="d num">' + pct(v.valor / t.ganho) + '</td></tr>').join('')
+      + '</tbody></table></div>';
+  }
+  // por categoria
+  const cats = Object.entries(t.porCat).sort((a, b) => b[1] - a[1]);
+  if (cats.length) {
+    const max = cats[0][1] || 1;
+    h += '<div class="tabela"><table><thead><tr><th>Gasto</th><th class="d">Valor</th><th class="d">% dos gastos</th></tr></thead><tbody>'
+      + cats.map(([n, v]) => '<tr><td><span class="barra-mini" style="width:' + Math.max(4, v / max * 48) + 'px;background:var(--cor-erro-borda)"></span>' + esc(n) + '</td><td class="d num">' + brl(v) + '</td><td class="d num">' + pct(v / t.gasto) + '</td></tr>').join('')
+      + '</tbody></table></div>';
+  }
+
+  if (ehDia) {
+    const d = S.dias[p.ini];
+    const itens = [...d.ganhos.map(g => ['Ganho', g.plat + (g.corridas ? ' · ' + g.corridas + ' corr.' : ''), g.valor]), ...d.gastos.map(g => ['Gasto', g.cat + (g.desc ? ' · ' + g.desc : ''), -g.valor])];
+    h += '<div class="tabela"><table><thead><tr><th>Tipo</th><th>Lançamento</th><th class="d">Valor</th></tr></thead><tbody>'
+      + itens.map(([a, b, v]) => '<tr><td>' + a + '</td><td>' + esc(b) + '</td><td class="d num ' + (v < 0 ? 'neg' : '') + '">' + brl(v) + '</td></tr>').join('')
+      + '</tbody><tfoot><tr><td colspan="2">Lucro do dia</td><td class="d num">' + brl(t.lucro) + '</td></tr></tfoot></table></div>';
+    if (d.obs) h += '<div class="cartao"><h2>Observações</h2><p style="margin:0;white-space:pre-wrap">' + esc(d.obs) + '</p></div>';
+  } else {
+    h += '<div class="tabela tabela-rolagem"><table><thead><tr><th>Dia</th><th class="d">Ganhos</th><th class="d">Gastos</th><th class="d">Lucro</th><th class="d">Corr.</th><th class="d">Km</th><th class="d">Horas</th></tr></thead><tbody>'
+      + t.dias.slice().reverse().map(c => '<tr class="' + (c.ganho || c.gasto ? '' : 'folga') + '"><td>' + SEMANA_CURTA[paraData(c.data).getDay()] + ' ' + dataBr(c.data, false) + '</td>'
+        + (c.ganho || c.gasto
+          ? '<td class="d num">' + brl(c.ganho) + '</td><td class="d num">' + brl(c.gasto) + '</td><td class="d num ' + (c.lucro < 0 ? 'neg' : '') + '"><b>' + brl(c.lucro) + '</b></td><td class="d num">' + (c.corridas || '—') + '</td><td class="d num">' + (c.km ? num(c.km) : '—') + '</td><td class="d num">' + (c.horas ? horasTxt(c.horas) : '—') + '</td>'
+          : '<td class="d" colspan="6">sem lançamento</td>') + '</tr>').join('')
+      + '</tbody><tfoot><tr><td>Total</td><td class="d num">' + brl(t.ganho) + '</td><td class="d num">' + brl(t.gasto) + '</td><td class="d num">' + brl(t.lucro) + '</td><td class="d num">' + (t.corridas || '—') + '</td><td class="d num">' + (t.km ? num(t.km) : '—') + '</td><td class="d num">' + (t.horas ? horasTxt(t.horas) : '—') + '</td></tr></tfoot></table></div>';
+  }
+
+  h += '<div class="cartao"><h2>Compartilhar</h2><div class="acoes"><button class="btn btn-primario" id="btnCopiar">Copiar resumo para WhatsApp</button></div><textarea class="texto-copia" id="resumoTexto" readonly></textarea></div>';
+
+  $('relConteudo').innerHTML = h;
+  $('btnCopiar').onclick = () => copiar(resumoTexto(p, t), $('resumoTexto'), 'Resumo copiado. É só colar no WhatsApp.');
+}
+
+function kpi(rot, val, det, destaque) {
+  return '<div class="kpi' + (destaque ? ' destaque' : '') + '"><div class="rot">' + rot + '</div><div class="val num">' + val + '</div>' + (det ? '<div class="det">' + det + '</div>' : '') + '</div>';
+}
+
+function grafico(dias) {
+  const W = 640, H = 220, mE = 8, mD = 8, mT = 12, mB = 34;
+  const vals = dias.map(d => d.lucro);
+  const max = Math.max(0, ...vals), min = Math.min(0, ...vals);
+  const amp = (max - min) || 1;
+  const y = v => mT + (max - v) / amp * (H - mT - mB);
+  const n = dias.length, passo = (W - mE - mD) / n, larg = Math.max(1.5, passo * 0.68);
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Lucro por dia">';
+  s += '<line x1="' + mE + '" x2="' + (W - mD) + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="var(--cor-borda)" stroke-width="1"/>';
+  const meta = S.config.metaDia || 0;
+  if (meta > 0 && meta <= max * 1.4) s += '<line x1="' + mE + '" x2="' + (W - mD) + '" y1="' + y(meta) + '" y2="' + y(meta) + '" stroke="var(--cor-acento)" stroke-width="2" stroke-dasharray="5 4"/>';
+  dias.forEach((d, i) => {
+    const x = mE + i * passo + (passo - larg) / 2;
+    if (d.lucro !== 0) {
+      const y0 = y(Math.max(0, d.lucro)), alt = Math.abs(y(d.lucro) - y(0));
+      s += '<rect x="' + x.toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' + larg.toFixed(1) + '" height="' + Math.max(1, alt).toFixed(1) + '" rx="' + Math.min(3, larg / 3) + '" fill="' + (d.lucro < 0 ? 'var(--cor-erro)' : 'var(--cor-primaria-clara)') + '"><title>' + dataBr(d.data, false) + ': ' + brl(d.lucro) + '</title></rect>';
+    }
+  });
+  const marcas = n <= 10 ? dias.map((_, i) => i) : [0, Math.floor((n - 1) / 2), n - 1];
+  marcas.forEach(i => {
+    const x = mE + i * passo + passo / 2;
+    const lbl = n <= 10 ? SEMANA_CURTA[paraData(dias[i].data).getDay()] + ' ' + dataBr(dias[i].data, false).slice(0, 2) : dataBr(dias[i].data, false);
+    s += '<text x="' + x + '" y="' + (H - 9) + '" font-size="17" fill="var(--cor-texto-suave)" text-anchor="' + (n > 10 && i === 0 ? 'start' : n > 10 && i === n - 1 ? 'end' : 'middle') + '">' + lbl + '</text>';
+  });
+  s += '</svg>';
+  s += '<div class="legenda"><span><i style="background:var(--cor-primaria-clara)"></i>lucro</span><span><i style="background:var(--cor-erro)"></i>prejuízo</span>' + (meta > 0 ? '<span><i style="background:var(--cor-acento)"></i>meta ' + brl(meta) + '</span>' : '') + '</div>';
+  return s;
+}
+
+function resumoTexto(p, t) {
+  const L = [];
+  L.push('🚗 *' + p.titulo + '* — ' + p.faixa);
+  L.push('');
+  L.push('💰 Ganhos: ' + brl(t.ganho) + (t.corridas ? ' (' + t.corridas + ' corridas)' : ''));
+  L.push('⛽ Gastos: ' + brl(t.gasto));
+  L.push('✅ *Lucro: ' + brl(t.lucro) + '*' + (isFinite(t.margem) ? ' (margem ' + pct(t.margem) + ')' : ''));
+  if (p.ini !== p.fim) L.push('📅 Dias trabalhados: ' + t.diasTrab + ' de ' + t.dias.length + (t.diasTrab ? ' · média ' + brl(t.lucro / t.diasTrab) + '/dia' : ''));
+  if (t.horas) L.push('⏱️ ' + horasTxt(t.horas) + ' · ' + brl(t.lucroH / t.horas) + '/hora');
+  if (t.km) L.push('🛣️ ' + num(t.km) + ' km · ' + brl(t.lucroKm / t.km) + '/km');
+  if (S.config.custoKm > 0 && t.km) L.push('🔧 Lucro real estimado (desgaste ' + brl(S.config.custoKm) + '/km): ' + brl(t.lucroReal));
+  const plats = Object.entries(t.porPlat).sort((a, b) => b[1].valor - a[1].valor);
+  if (plats.length > 1) { L.push(''); L.push('Por plataforma:'); plats.forEach(([n, v]) => L.push('• ' + n + ': ' + brl(v.valor))); }
+  const cats = Object.entries(t.porCat).sort((a, b) => b[1] - a[1]);
+  if (cats.length) { L.push(''); L.push('Gastos:'); cats.forEach(([n, v]) => L.push('• ' + n + ': ' + brl(v))); }
+  return L.join('\n');
+}
+
+async function copiar(texto, area, msg) {
+  try { await navigator.clipboard.writeText(texto); toast(msg); area.classList.remove('mostra'); }
+  catch (e) { area.value = texto; area.classList.add('mostra'); area.focus(); area.select(); toast('Selecione o texto abaixo e copie.'); }
+}
+
+function ligarRel() {
+  document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { S.rel.tipo = b.dataset.tipo; renderRel(); });
+  $('relDia').addEventListener('change', e => { if (RE_DIA.test(e.target.value)) { S.rel.dia = e.target.value; renderRel(); } });
+  $('relIni').addEventListener('change', e => { if (RE_DIA.test(e.target.value)) { S.rel.ini = e.target.value; renderRel(); } });
+  $('relFim').addEventListener('change', e => { if (RE_DIA.test(e.target.value)) { S.rel.fim = e.target.value; renderRel(); } });
+}
+
+/* ============================================================
+   INTERFACE — aba Ajustes
+   ============================================================ */
+function renderAj() {
+  const foco = document.activeElement;
+  if (foco !== $('cfgMeta')) $('cfgMeta').value = S.config.metaDia ? String(S.config.metaDia).replace('.', ',') : '';
+  if (foco !== $('cfgKm')) $('cfgKm').value = S.config.custoKm ? String(S.config.custoKm).replace('.', ',') : '';
+  const n = Object.keys(S.dias).length;
+  const ult = ultimoBackup();
+  $('cfgModo').textContent = n + (n === 1 ? ' dia lançado' : ' dias lançados') + ' · ' + (ult ? 'último backup em ' + dataBr(ult) : 'nenhum backup ainda') + '.';
+}
+function ligarAj() {
+  $('cfgMeta').addEventListener('change', e => { const v = lerValor(e.target.value); const novo = v > 0 ? v : 0; if (novo !== S.config.metaDia) { S.config.metaDia = novo; salvarConfig(); toast('Meta salva.'); } renderTudo(); });
+  $('cfgKm').addEventListener('change', e => { const v = lerValor(e.target.value); const novo = v > 0 ? v : 0; if (novo !== S.config.custoKm) { S.config.custoKm = novo; salvarConfig(); toast('Custo por km salvo.'); } renderTudo(); });
+  $('btnBackup').onclick = salvarBackup;
+  $('arqRestaurar').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) lerBackup(f); e.target.value = ''; });
+  $('btnCsv').onclick = () => {
+    const linhas = ['data;tipo;plataforma_ou_categoria;descricao;corridas;valor'];
+    Object.keys(S.dias).sort().forEach(s => {
+      const d = S.dias[s];
+      d.ganhos.forEach(g => linhas.push([s, 'ganho', g.plat, '', g.corridas || 0, String(g.valor).replace('.', ',')].join(';')));
+      d.gastos.forEach(g => linhas.push([s, 'gasto', g.cat, (g.desc || '').replace(/;/g, ','), '', String(g.valor).replace('.', ',')].join(';')));
+      if (d.km || d.horas) linhas.push([s, 'jornada', '', 'km=' + num(d.km) + ' horas=' + horasTxt(d.horas), '', ''].join(';'));
+    });
+    copiar(linhas.join('\n'), $('csvTexto'), 'CSV copiado. Cole numa planilha (separador ;).');
+  };
+}
+
+/* ============================================================
+   NAVEGAÇÃO
+   ============================================================ */
+function irPara(aba) {
+  S.aba = aba;
+  document.querySelectorAll('.aba').forEach(s => s.classList.toggle('ativa', s.id === 'aba-' + aba));
+  document.querySelectorAll('nav.inferior button').forEach(b => {
+    if (b.dataset.aba === aba) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+  renderTudo(); window.scrollTo(0, 0);
+}
+function renderTudo() {
+  if (S.aba === 'hoje') renderHoje();
+  else if (S.aba === 'rel') renderRel();
+  else renderAj();
+}
+
+document.querySelectorAll('nav.inferior button').forEach(b => b.onclick = () => irPara(b.dataset.aba));
+ligarHoje(); ligarRel(); ligarAj();
+iniciarDados();
+
+/* ---------- instalação (PWA) ---------- */
+let pedidoInstalar = null;
+const instalado = (window.matchMedia ? window.matchMedia('(display-mode: standalone)').matches : false) || navigator.standalone === true;
+const ehIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+function mostrarInstalar(txt, comBotao) {
+  if (instalado) return;
+  $('cardInstalar').hidden = false; $('txtInstalar').innerHTML = txt; $('btnInstalar').hidden = !comBotao;
+}
+if (!instalado && ehIOS) mostrarInstalar('No iPhone: abra este endereço no <b>Safari</b>, toque em <b>Compartilhar</b> (o quadrado com a seta) e depois em <b>Adicionar à Tela de Início</b>.', false);
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); pedidoInstalar = e;
+  mostrarInstalar('Coloque o Diário na tela inicial e abra como um aplicativo, mesmo sem internet.', true);
+  if (!Object.keys(S.dias).length && S.aba === 'hoje') toast('Dá para instalar este app no celular.', 'Instalar', () => $('btnInstalar').click(), 9000);
+});
+$('btnInstalar').onclick = async () => {
+  if (!pedidoInstalar) return;
+  pedidoInstalar.prompt();
+  try { await pedidoInstalar.userChoice; } catch (e) {}
+  pedidoInstalar = null; $('cardInstalar').hidden = true;
+};
+window.addEventListener('appinstalled', () => { $('cardInstalar').hidden = true; toast('App instalado. Procure o ícone "Diário" na tela inicial.'); });
+
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+})();
+</script>
+</body>
+</html>
